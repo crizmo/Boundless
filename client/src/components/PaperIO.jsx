@@ -1,9 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { MapContainer, TileLayer, useMap, useMapEvents } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 import './PaperIO.css';
 
-const GRID_SIZE = 30;
-const CELL_SIZE = 20;
+const CELL_SIZE_BASE = 20; // Base cell size at zoom level 18
+const GRID_SIZE = 60;
 const GAME_SPEED = 150; // milliseconds
+const DEFAULT_POSITION = [51.505, -0.09]; // London as default position
 
 const Direction = {
   UP: { x: 0, y: -1 },
@@ -22,8 +26,17 @@ const PaperIO = () => {
   });
   const [gameOver, setGameOver] = useState(false);
   const [score, setScore] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(18);
   const canvasRef = useRef(null);
   const gameLoopRef = useRef(null);
+  const mapRef = useRef(null);
+
+  // Calculate cell size based on zoom level
+  const getCellSize = () => {
+    // Base cell size adjusted by zoom level difference
+    return CELL_SIZE_BASE * Math.pow(2, zoomLevel - 18);
+  };
 
   // Initialize player territory
   useEffect(() => {
@@ -42,23 +55,44 @@ const PaperIO = () => {
   // Handle keyboard input
   useEffect(() => {
     const handleKeyPress = (e) => {
+      // P key to pause/resume
+      if (e.key.toLowerCase() === 'p') {
+        setIsPaused(prev => !prev);
+        return;
+      }
+      
+      // Don't process movement if game is paused
+      if (isPaused || gameOver) return;
+      
       switch (e.key) {
+        // Up controls
         case 'ArrowUp':
+        case 'w':
+        case 'W':
           if (player.direction !== Direction.DOWN) {
             setPlayer(prev => ({ ...prev, direction: Direction.UP }));
           }
           break;
+        // Right controls
         case 'ArrowRight':
+        case 'd':
+        case 'D':
           if (player.direction !== Direction.LEFT) {
             setPlayer(prev => ({ ...prev, direction: Direction.RIGHT }));
           }
           break;
+        // Down controls
         case 'ArrowDown':
+        case 's':
+        case 'S':
           if (player.direction !== Direction.UP) {
             setPlayer(prev => ({ ...prev, direction: Direction.DOWN }));
           }
           break;
+        // Left controls
         case 'ArrowLeft':
+        case 'a':
+        case 'A':
           if (player.direction !== Direction.RIGHT) {
             setPlayer(prev => ({ ...prev, direction: Direction.LEFT }));
           }
@@ -72,7 +106,7 @@ const PaperIO = () => {
     return () => {
       window.removeEventListener('keydown', handleKeyPress);
     };
-  }, [player.direction]);
+  }, [player.direction, isPaused, gameOver]);
 
   // Check if position is in territory
   const isInTerritory = (position, territory) => {
@@ -160,12 +194,11 @@ const PaperIO = () => {
     
     return enclosedCells;
   };
-  
 
   // Game loop
   useEffect(() => {
     const gameLoop = () => {
-      if (gameOver) return;
+      if (gameOver || isPaused) return;
 
       setPlayer(prev => {
         // Calculate new position
@@ -207,8 +240,7 @@ const PaperIO = () => {
             // Find cells enclosed by the loop created by the trail
             const enclosedCells = findEnclosedCells(
               prev.territory, 
-              newTrail, 
-              newPosition
+              newTrail
             );
             
             // Add trail and enclosed cells to territory
@@ -232,7 +264,7 @@ const PaperIO = () => {
 
     gameLoopRef.current = setInterval(gameLoop, GAME_SPEED);
     return () => clearInterval(gameLoopRef.current);
-  }, [gameOver]);
+  }, [gameOver, isPaused]);
 
   // Render game on canvas
   useEffect(() => {
@@ -240,46 +272,52 @@ const PaperIO = () => {
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
+    const cellSize = getCellSize();
     
-    // Clear canvas
+    // Set canvas size based on zoom level
+    const canvasSize = GRID_SIZE * cellSize;
+    canvas.width = canvasSize;
+    canvas.height = canvasSize;
+    
+    // Clear canvas with transparent background
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     // Draw grid
-    ctx.strokeStyle = '#ccc';
+    ctx.strokeStyle = 'rgba(204, 204, 204, 0.5)';
     ctx.lineWidth = 0.5;
     for (let i = 0; i <= GRID_SIZE; i++) {
       ctx.beginPath();
-      ctx.moveTo(i * CELL_SIZE, 0);
-      ctx.lineTo(i * CELL_SIZE, GRID_SIZE * CELL_SIZE);
+      ctx.moveTo(i * cellSize, 0);
+      ctx.lineTo(i * cellSize, GRID_SIZE * cellSize);
       ctx.stroke();
       
       ctx.beginPath();
-      ctx.moveTo(0, i * CELL_SIZE);
-      ctx.lineTo(GRID_SIZE * CELL_SIZE, i * CELL_SIZE);
+      ctx.moveTo(0, i * cellSize);
+      ctx.lineTo(GRID_SIZE * cellSize, i * cellSize);
       ctx.stroke();
     }
 
-    // Draw territory
-    ctx.fillStyle = player.color;
+    // Draw territory with semi-transparency
+    ctx.fillStyle = `${player.color}CC`; // Add alpha channel for semi-transparency
     player.territory.forEach(pos => {
-      ctx.fillRect(pos.x * CELL_SIZE, pos.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+      ctx.fillRect(pos.x * cellSize, pos.y * cellSize, cellSize, cellSize);
     });
 
-    // Draw trail
-    ctx.fillStyle = '#7CB342';
+    // Draw trail with semi-transparency
+    ctx.fillStyle = '#7CB342CC';
     player.trail.forEach(pos => {
-      ctx.fillRect(pos.x * CELL_SIZE, pos.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+      ctx.fillRect(pos.x * cellSize, pos.y * cellSize, cellSize, cellSize);
     });
 
     // Draw player
     ctx.fillStyle = '#2E7D32';
     ctx.fillRect(
-      player.position.x * CELL_SIZE,
-      player.position.y * CELL_SIZE,
-      CELL_SIZE,
-      CELL_SIZE
+      player.position.x * cellSize,
+      player.position.y * cellSize,
+      cellSize,
+      cellSize
     );
-  }, [player]);
+  }, [player, zoomLevel]);
 
   const restartGame = () => {
     setPlayer({
@@ -291,6 +329,7 @@ const PaperIO = () => {
     });
     setGameOver(false);
     setScore(0);
+    setIsPaused(false);
 
     // Initialize player territory
     const initialTerritory = [];
@@ -305,27 +344,90 @@ const PaperIO = () => {
     }));
   };
 
+  // Map Controller component that tracks zoom and keeps player centered
+  const MapController = () => {
+    const map = useMap();
+    mapRef.current = map;
+    
+    // Center map on player position initially
+    useEffect(() => {
+      map.setView(DEFAULT_POSITION, 18);
+    }, [map]);
+    
+    // Track zoom level changes
+    useMapEvents({
+      zoom: () => {
+        setZoomLevel(map.getZoom());
+      }
+    });
+    
+    // Keep the player centered as they move
+    useEffect(() => {
+      if (isPaused || gameOver) return;
+      
+      // Convert player grid position to equivalent point on the map
+      // This is a simplified approach - in a real implementation, you'd need proper coordinate conversion
+      const playerLatLng = map.getCenter();
+      map.setView(playerLatLng, map.getZoom());
+    }, [player.position, map]);
+    
+    return null;
+  };
+
   return (
-    <div className="game-container">
-      <h1>Paper IO Clone</h1>
-      <div className="score">Score: {score}</div>
-      <canvas
-        ref={canvasRef}
-        width={GRID_SIZE * CELL_SIZE}
-        height={GRID_SIZE * CELL_SIZE}
-        className="game-canvas"
-      />
-      {gameOver && (
-        <div className="game-over">
-          <h2>Game Over</h2>
-          <p>Your final score: {score}</p>
-          <button onClick={restartGame}>Play Again</button>
+    <div className="game-container" style={{ height: '100vh', width: '100vw', padding: 0, margin: 0 }}>
+      {/* Score display */}
+      <div className="score-display">
+        <div className="score">Score: {score}</div>
+        {isPaused && <div className="paused-notice">PAUSED</div>}
+      </div>
+      
+      <div className="game-area" style={{ height: '100vh', width: '100vw', margin: 0 }}>
+        {/* Map as background */}
+        <MapContainer 
+          center={DEFAULT_POSITION} 
+          zoom={18} 
+          style={{ height: '100%', width: '100%' }}
+          zoomControl={true}
+          doubleClickZoom={false}
+          scrollWheelZoom={true}
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+          />
+          <MapController />
+        </MapContainer>
+        
+        {/* Game canvas overlay */}
+        <div className="canvas-container">
+          <canvas
+            ref={canvasRef}
+            className="game-canvas"
+          />
         </div>
-      )}
-      <div className="instructions">
-        <p>Use arrow keys to move</p>
-        <p>Claim territory by creating loops</p>
-        <p>Don't hit your own trail!</p>
+        
+        {gameOver && (
+          <div className="game-over">
+            <h2>Game Over</h2>
+            <p>Your final score: {score}</p>
+            <button onClick={restartGame}>Play Again</button>
+          </div>
+        )}
+      </div>
+      
+      {/* Bottom navbar */}
+      <div className="bottom-navbar">
+        <button 
+          onClick={() => setIsPaused(prev => !prev)}
+          className={isPaused ? 'resume-btn' : 'pause-btn'}
+        >
+          {isPaused ? 'Resume' : 'Pause'}
+        </button>
+        <div className="controls-info">
+          <p>Press "P" to Pause/Resume • Use Arrow keys or WASD to move</p>
+          <p>Zoom with scroll wheel • Claim territory by making loops</p>
+        </div>
       </div>
     </div>
   );

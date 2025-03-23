@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, Polygon, Polyline } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { io } from 'socket.io-client';
@@ -20,6 +20,7 @@ const MapComponent = () => {
   const socketRef = useRef(null);
   const mousePosition = useRef(null);
   const animationFrameRef = useRef(null);
+  const playerIdRef = useRef(null);
 
   // Handle username submission
   const [usernameInput, setUsernameInput] = useState('');
@@ -41,6 +42,15 @@ const MapComponent = () => {
 
       socketRef.current.on('updatePlayers', (updatedPlayers) => {
         setPlayers(updatedPlayers);
+        // Store your own player ID for easy reference
+        if (!playerIdRef.current) {
+          for (const [id, player] of Object.entries(updatedPlayers)) {
+            if (player.username === username) {
+              playerIdRef.current = id;
+              break;
+            }
+          }
+        }
       });
 
       return () => {
@@ -131,7 +141,6 @@ const MapComponent = () => {
             style={{
               padding: '10px', fontSize: '16px', width: '200px',
               border: '1px solid #ccc', borderRadius: '5px'
-
             }}
           />
           <button
@@ -157,11 +166,54 @@ const MapComponent = () => {
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
             />
+            
+            {/* Render player territories */}
             {Object.entries(players).map(([id, player]) => (
-              <Marker key={id} position={player.position} icon={playerIcon}>
-                <Popup>{player.username}</Popup>
+              player.territory && (
+                <Polygon
+                  key={`territory-${id}`}
+                  positions={player.territory}
+                  pathOptions={{
+                    color: player.color || '#3388ff',
+                    fillColor: player.color || '#3388ff',
+                    fillOpacity: 0.3,
+                    weight: 2
+                  }}
+                />
+              )
+            ))}
+            
+            {/* Render player trails */}
+            {Object.entries(players).map(([id, player]) => (
+              player.trail && player.trail.length > 1 && (
+                <Polyline
+                  key={`trail-${id}`}
+                  positions={player.trail}
+                  pathOptions={{
+                    color: player.color || '#3388ff',
+                    weight: 3,
+                    dashArray: '5, 10',
+                    lineCap: 'round'
+                  }}
+                />
+              )
+            ))}
+            
+            {/* Render player markers */}
+            {Object.entries(players).map(([id, player]) => (
+              <Marker 
+                key={`marker-${id}`} 
+                position={player.position} 
+                icon={playerIcon}
+              >
+                <Popup>
+                  <strong>{player.username}</strong>
+                  <br />
+                  {player.isInsideTerritory ? 'Inside territory' : 'Outside territory'}
+                </Popup>
               </Marker>
             ))}
+            
             <MapUpdater />
           </MapContainer>
 
@@ -193,6 +245,11 @@ const MapComponent = () => {
               {isMoving ? 'Pause' : 'Resume'}
             </button>
             <p style={{ marginLeft: '20px' }}>Press "P" to Pause/Resume</p>
+            {playerIdRef.current && players[playerIdRef.current] && (
+              <p style={{ marginLeft: '20px' }}>
+                Status: {players[playerIdRef.current].isInsideTerritory ? 'In Territory' : 'Creating Trail'}
+              </p>
+            )}
           </div>
         </>
       )}

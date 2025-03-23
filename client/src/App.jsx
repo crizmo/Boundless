@@ -1,6 +1,7 @@
 import React from 'react'
 import './App.css'
 import MapComponent from '@/components/shared/MapComponent'
+import PaperIO from './components/PaperIO';
 
 function App() {
 
@@ -11,6 +12,7 @@ function App() {
         {/* Main Component */}
         <div id="main-container">
           <MapComponent/>
+          {/* <PaperIO /> */}
         </div>
       </div>
     </>
@@ -18,17 +20,3 @@ function App() {
 }
 
 export default App
-
-// import React from 'react';
-// import PaperIO from './components/PaperIO';
-// import './App.css';
-
-// function App() {
-//   return (
-//     <div className="App">
-//       <PaperIO />
-//     </div>
-//   );
-// }
-
-// export default App;
