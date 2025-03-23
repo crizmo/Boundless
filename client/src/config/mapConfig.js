@@ -9,6 +9,14 @@ export const MARKER_ICONS = [
 
 export const DEFAULT_POSITION = [52.26927690226104, -113.81143282313303];
 
+// Define map boundaries for spawn selection
+export const MAP_BOUNDS = {
+  north: 52.3, // Max latitude
+  south: 52.2, // Min latitude
+  east: -113.7, // Max longitude
+  west: -113.9, // Min longitude
+};
+
 export const MARKERS = [
     { id: 1, position: [51.05584392400242, -114.0700604464782], text: "Prince's Island Park" },
     { id: 2, position: [51.475052218188836, -112.71714892175292], text: "Drumheller" },
