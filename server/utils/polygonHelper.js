@@ -79,7 +79,69 @@ function calculatePolygonArea(polygon) {
   return area * 10000000; // Scale factor to make scores more readable
 }
 
+/**
+ * Check if a point is inside a polygon
+ * @param {Array} point - [lat, lng] coordinates
+ * @param {Array} polygon - Array of [lat, lng] coordinates
+ * @returns {Boolean} - True if point is inside polygon
+ */
+function isPointInPolygon(point, polygon) {
+  if (!polygon || polygon.length < 3) return false;
+  
+  // Simple ray-casting algorithm
+  let inside = false;
+  const [x, y] = point;
+  
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const [xi, yi] = polygon[i];
+    const [xj, yj] = polygon[j];
+    
+    const intersect = ((yi > y) !== (yj > y)) && 
+                      (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
+  }
+  
+  return inside;
+}
+
+/**
+ * Check if two polygons overlap/intersect
+ * @param {Array} polygon1 - Array of [lat, lng] coordinates for the first polygon
+ * @param {Array} polygon2 - Array of [lat, lng] coordinates for the second polygon
+ * @returns {Boolean} - True if the polygons overlap
+ */
+function doPolygonsOverlap(polygon1, polygon2) {
+  // Check if any point of polygon1 is inside polygon2
+  for (const point of polygon1) {
+    if (isPointInPolygon(point, polygon2)) {
+      return true;
+    }
+  }
+  
+  // Check if any point of polygon2 is inside polygon1
+  for (const point of polygon2) {
+    if (isPointInPolygon(point, polygon1)) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+/**
+ * Get points from one polygon that are inside another polygon
+ * @param {Array} polygon - The polygon to check points from
+ * @param {Array} clipPolygon - The polygon to check against
+ * @returns {Array} - Points from polygon that are inside clipPolygon
+ */
+function getPointsInsidePolygon(polygon, clipPolygon) {
+  return polygon.filter(point => isPointInPolygon(point, clipPolygon));
+}
+
 module.exports = {
   createPolygon,
-  calculatePolygonArea
+  calculatePolygonArea,
+  isPointInPolygon,
+  doPolygonsOverlap,
+  getPointsInsidePolygon
 };

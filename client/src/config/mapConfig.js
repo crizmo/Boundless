@@ -7,14 +7,14 @@ export const MARKER_ICONS = [
     { id: 2, icon: marker2 },
 ]
 
-export const DEFAULT_POSITION = [52.26927690226104, -113.81143282313303];
+export const DEFAULT_POSITION = [35.6586, 139.7454]; // Tokyo Tower, Japan
 
 // Define map boundaries for spawn selection
 export const MAP_BOUNDS = {
-  north: 52.3, // Max latitude
-  south: 52.2, // Min latitude
-  east: -113.7, // Max longitude
-  west: -113.9, // Min longitude
+  north: 35.73, // Max latitude
+  south: 35.62, // Min latitude
+  east: 139.75, // Max longitude
+  west: 139.55, // Min longitude
 };
 
 export const MARKERS = [
