@@ -44,6 +44,7 @@ const MapComponent = () => {
   // Spawn location selection state
   const [selectedSpawn, setSelectedSpawn] = useState(DEFAULT_POSITION);
   const [showSpawnSelector, setShowSpawnSelector] = useState(true);
+  const [isManuallyPanning, setIsManuallyPanning] = useState(false);
 
   // Handle username submission
   const [usernameInput, setUsernameInput] = useState('');
@@ -205,7 +206,8 @@ const MapComponent = () => {
   const setupSocketListeners = () => {
     socketRef.current.on('updatePlayers', (updatedPlayers) => {
       setPlayers(updatedPlayers);
-      // Store your own player ID for easy reference
+      
+      // Store your own player ID for easy reference if not already set
       if (!playerIdRef.current) {
         for (const [id, player] of Object.entries(updatedPlayers)) {
           if (player.username === username) {
@@ -213,6 +215,12 @@ const MapComponent = () => {
             break;
           }
         }
+      }
+      
+      // Only update local playerPosition if we're not actively moving
+      // This prevents server updates from overriding local movement
+      if (playerIdRef.current && updatedPlayers[playerIdRef.current] && !isMoving) {
+        setPlayerPosition(updatedPlayers[playerIdRef.current].position);
       }
     });
 
@@ -277,9 +285,12 @@ const MapComponent = () => {
 
   // Smooth movement logic
   useEffect(() => {
+    // Only set up movement animation if player has spawned into the game
+    if (!hasSpawned) return;
+    
     const step = 0.00001;
     const movePlayer = () => {
-      if (isMoving && mousePosition.current && hasSpawned && socketRef.current) {
+      if (isMoving && mousePosition.current && socketRef.current) {
         setPlayerPosition((prevPosition) => {
           const [lat, lng] = prevPosition;
           const map = document.querySelector('.leaflet-container');
@@ -317,12 +328,55 @@ const MapComponent = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Center the map on the player's position
   const MapUpdater = () => {
     const map = useMap();
+    const lastManualPositionRef = useRef(null);
+    
+    // Add map events to detect manual panning
+    useMapEvents({
+      dragstart: () => {
+        if (!isMoving) {
+          setIsManuallyPanning(true);
+        }
+      },
+      dragend: () => {
+        if (!isMoving) {
+          // Store the manual position when paused
+          lastManualPositionRef.current = map.getCenter();
+        }
+      },
+      zoomstart: () => {
+        if (!isMoving) {
+          setIsManuallyPanning(true);
+        }
+      },
+      zoomend: () => {
+        if (!isMoving) {
+          // Store the manual position when paused
+          lastManualPositionRef.current = map.getCenter();
+        }
+      }
+    });
+    
     useEffect(() => {
-      map.setView(playerPosition, map.getZoom());
-    }, [playerPosition, map]);
+      // Only auto-center when player is moving
+      // When paused, don't auto-center at all
+      if (isMoving) {
+        map.setView(playerPosition, map.getZoom());
+        lastManualPositionRef.current = null; // Reset manual position when moving
+      } else if (lastManualPositionRef.current) {
+        // If paused and we have a saved manual position, maintain it
+        map.setView(lastManualPositionRef.current, map.getZoom());
+      }
+    }, [map, playerPosition, isMoving]);
+    
+    // Reset manual position when player resumes movement
+    useEffect(() => {
+      if (isMoving) {
+        setIsManuallyPanning(false);
+      }
+    }, [isMoving]);
+    
     return null;
   };
 
