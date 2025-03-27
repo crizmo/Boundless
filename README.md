@@ -120,6 +120,20 @@ Contributions are welcome! To contribute:
 
 Please see CONTRIBUTING.md for detailed contribution guidelines.
 
+## 🔍 Developers Wanted!
+
+**Looking for developers to help improve and optimize Boundless!**
+
+Whether you're experienced with game development, real-time multiplayer systems, or geospatial applications, we'd love your help in taking Boundless to the next level. Areas we're particularly focused on:
+
+- Performance optimization for smooth gameplay
+- Enhanced territory capture algorithms
+- Mobile experience improvements
+- Server-side scalability enhancements
+- Creative game mechanics and features
+
+Interested? Join our [Discord](https://discord.gg/RPaWHVBb7B) or reach out via GitHub issues to discuss how you can get involved!
+
 ## 🗺️ Roadmap
 
 - [ ] Additional game modes (Team battles, Capture the Flag)
