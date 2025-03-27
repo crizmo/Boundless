@@ -5,6 +5,8 @@ import L from 'leaflet';
 import { io } from 'socket.io-client';
 import { DEFAULT_POSITION, MAP_BOUNDS } from '@/config/mapConfig';
 
+const serverUrl = import.meta.env.VITE_BOUNDLESSAPI;
+
 // Fix icon path issues by using absolute URLs
 const playerIcon = new L.Icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
@@ -53,7 +55,7 @@ const MapComponent = () => {
   useEffect(() => {
     // Only create the socket if we don't already have one
     if (!tempSocketRef.current) {
-      const tempSocket = io('http://localhost:3000', { autoConnect: true });
+      const tempSocket = io(serverUrl, { autoConnect: true });
 
       tempSocket.on('updatePlayers', (updatedPlayers) => {
         setPlayers(updatedPlayers);
@@ -143,7 +145,7 @@ const MapComponent = () => {
       }
 
       // Connect to socket and send username + selected spawn
-      socketRef.current = io('http://localhost:3000');
+      socketRef.current = io(serverUrl);
       socketRef.current.emit('join', { username: usernameInput.trim(), requestedPosition: selectedSpawn });
 
       // Listen for the server to assign a spawn position
