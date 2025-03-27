@@ -1,13 +1,11 @@
-# Boundless - Territory Conquest Game
-
-![Boundless Logo](public/images/logo.png)
+# Boundless 
 
 [![React](https://img.shields.io/badge/React-18.2.0-blue.svg)](https://reactjs.org/)
 [![Leaflet](https://img.shields.io/badge/Leaflet-1.9.4-green.svg)](https://leafletjs.com/)
 [![Socket.IO](https://img.shields.io/badge/Socket.IO-4.8.1-black.svg)](https://socket.io/)
 [![Vite](https://img.shields.io/badge/Vite-5.2.0-purple.svg)](https://vitejs.dev/)
 
-**Conquer the World, One Territory at a Time.**
+**Expand. Dominate. Become Boundless.**
 
 Boundless is an immersive real-time multiplayer game inspired by Paper.io, where you compete against other players to capture and control territory on real-world maps. Expand your domain, outmaneuver opponents, and rise to the top of the leaderboard!
 
@@ -16,8 +14,6 @@ Boundless is an immersive real-time multiplayer game inspired by Paper.io, where
 Experience Boundless today:
 - **Beta Version:** [boundless-beta.vercel.app](https://boundless-beta.vercel.app)
 - **Main Site:** [bounds.vercel.app](https://bounds.vercel.app)
-
-![Boundless Gameplay Screenshot](public/images/gameplay.png)
 
 ## 📋 Table of Contents
 
