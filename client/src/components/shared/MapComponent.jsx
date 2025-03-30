@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap, Polygon, Polyline, useM
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { io } from 'socket.io-client';
-import { DEFAULT_POSITION, MAP_BOUNDS } from '@/config/mapConfig';
+import { DEFAULT_POSITION } from '@/config/mapConfig';
 
 const serverUrl = import.meta.env.VITE_BOUNDLESSAPI;
 
