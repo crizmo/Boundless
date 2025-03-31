@@ -1,4 +1,5 @@
 # Boundless 
+> **Developers Wanted !** Looking for developers to help improve the territory mapping and capturing logic !
 
 [![React](https://img.shields.io/badge/React-18.2.0-blue.svg)](https://reactjs.org/)
 [![Leaflet](https://img.shields.io/badge/Leaflet-1.9.4-green.svg)](https://leafletjs.com/)
