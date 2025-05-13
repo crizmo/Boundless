@@ -14,7 +14,6 @@ Boundless is an immersive real-time multiplayer game inspired by Paper.io, where
 
 Experience Boundless today:
 - **Beta Version:** [boundless-beta.vercel.app](https://boundless-beta.vercel.app)
-- **Main Site:** [bounds.vercel.app](https://bounds.vercel.app)
 
 ## 📋 Table of Contents
 
